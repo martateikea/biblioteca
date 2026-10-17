@@ -120,7 +120,12 @@ function alta(datos) {
   };
   const campoDe = {};
   Object.entries(CAMPOS).forEach(([campo, nombre]) => { campoDe[nombre] = campo; });
-  hoja.appendRow(cabecera.map((nombre) => libro[campoDe[nombre]] ?? ''));
+  // Primera fila sin título ni ISBN. No vale appendRow: las casillas de Favorito
+  // cuentan como contenido y escribiría debajo de la fila 1000.
+  const libre = filas.findIndex((fila) => !fila[indice.titulo] && !fila[indice.isbn]);
+  const filaHoja = (libre < 0 ? filas.length : libre) + 2;
+  hoja.getRange(filaHoja, 1, 1, cabecera.length)
+    .setValues([cabecera.map((nombre) => libro[campoDe[nombre]] ?? '')]);
   return publico(libro);
 }
 
