@@ -38,7 +38,7 @@ const escapar = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => `&#${c
 const claseEstado = (estado) => palabras(estado).join('-') || 'sin-estado';
 
 function tarjeta(libro) {
-  const portada = libro.portada
+  const portada = /^https?:\/\//.test(libro.portada)
     ? `<img class="portada" src="${escapar(libro.portada)}" alt="" loading="lazy">`
     : `<div class="portada">${escapar(String(libro.titulo).charAt(0).toUpperCase())}</div>`;
   return `
