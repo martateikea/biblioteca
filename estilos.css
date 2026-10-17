@@ -1,0 +1,117 @@
+/* Estructura y disposición. Los colores vienen de tema.css. */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente);
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+#portada { margin: 24px 0 20px; }
+#cifra { font-size: 3.2rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin: 0; }
+#lema { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; color: var(--texto-suave); margin: 4px 0 12px; }
+.suave { color: var(--texto-suave); margin: 0; }
+
+#cotillea {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+#cotillea::after { content: " →"; }
+#cotillea[aria-expanded="true"]::after { content: " ↑"; }
+
+#buscador {
+  display: flex;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  padding: 8px 0;
+  background: var(--fondo);
+}
+
+#consulta {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 1rem; /* 16px evita el zoom automático en iPhone */
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto);
+}
+#consulta:focus { outline: 2px solid var(--acento); outline-offset: 1px; }
+
+#camara {
+  flex: none;
+  width: 50px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+#veredicto {
+  margin: 16px 0 8px;
+  padding: 14px 16px;
+  border-radius: var(--radio);
+  background: var(--superficie);
+  font-weight: 600;
+}
+#veredicto small { display: block; font-weight: 400; color: var(--texto-suave); margin-top: 4px; }
+
+#resultados { list-style: none; padding: 0; margin: 8px 0 0; }
+
+.libro {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.portada {
+  flex: none;
+  width: 56px;
+  height: 78px;
+  border-radius: 6px;
+  background: var(--superficie);
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+.datos { min-width: 0; }
+.datos h2 { font-size: 1rem; margin: 2px 0; }
+.datos p { margin: 2px 0; color: var(--texto-suave); font-size: 0.9rem; }
+
+.estado {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+.estado.en-casa { background: var(--en-casa); }
+.estado.reservado { background: var(--reservado); }
+.estado.lista-deseos { background: var(--deseo); }
