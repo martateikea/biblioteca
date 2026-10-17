@@ -39,7 +39,7 @@ const claseEstado = (estado) => palabras(estado).join('-') || 'sin-estado';
 
 function tarjeta(libro) {
   const portada = /^https?:\/\//.test(libro.portada)
-    ? `<img class="portada" src="${escapar(libro.portada)}" alt="" loading="lazy">`
+    ? `<img class="portada" src="${escapar(libro.portada)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
     : `<div class="portada">${escapar(String(libro.titulo).charAt(0).toUpperCase())}</div>`;
   return `
     <li class="libro">
@@ -115,7 +115,7 @@ function mismoTitulo(a, b) {
 function mostrarEscaneado(ficha, isbn) {
   $('escaneado').hidden = false;
   $('escaneado').innerHTML = ficha
-    ? `${ficha.portada ? `<img class="portada" src="${escapar(ficha.portada)}" alt="">` : ''}
+    ? `${ficha.portada ? `<img class="portada" src="${escapar(ficha.portada)}" alt="" onerror="this.remove()">` : ''}
        <div>Has escaneado<strong>${escapar(ficha.titulo)}</strong>${escapar(ficha.autor)}</div>`
     : `<div>Has escaneado<strong>ISBN ${escapar(isbn)}</strong>No hemos encontrado su título.</div>`;
 }
