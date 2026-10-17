@@ -70,9 +70,10 @@ function veredicto(encontrados) {
 
 let cotilleando = false;
 
-function pintar() {
+// `forzados`: resultados ya calculados (p. ej. tras escanear); si no, se busca lo escrito.
+function pintar(forzados) {
   const consulta = $('consulta').value.trim();
-  const encontrados = consulta ? libros.filter((l) => coincide(l, consulta)).sort(ordenar) : [];
+  const encontrados = (forzados ?? (consulta ? libros.filter((l) => coincide(l, consulta)) : [])).sort(ordenar);
   const visibles = consulta ? encontrados : (cotilleando ? [...libros].sort(ordenar) : []);
 
   $('veredicto').hidden = !consulta;
@@ -81,6 +82,110 @@ function pintar() {
   $('cotillea').setAttribute('aria-expanded', cotilleando);
   $('cotillea').textContent = cotilleando ? 'Ocultar' : `Cotillea ${CONFIG.peque ? `la biblioteca de ${CONFIG.peque}` : 'su biblioteca'}`;
   $('resultados').innerHTML = visibles.map(tarjeta).join('');
+}
+
+// --- ISBN: buscar por código y, si no está, por el título que dice Google Books ---
+
+const esIsbn = (texto) => /^97[89]\d{10}$/.test(texto);
+
+async function fichaPorIsbn(isbn) {
+  try {
+    const respuesta = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const info = (await respuesta.json()).items?.[0]?.volumeInfo;
+    if (!info) return null;
+    return {
+      titulo: info.title,
+      autor: (info.authors ?? []).join(', '),
+      portada: (info.imageLinks?.thumbnail ?? '').replace('http:', 'https:'),
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+// "Pollo Pepe" y "El pollo Pepe" son el mismo libro: las palabras del más corto están en el otro.
+function mismoTitulo(a, b) {
+  const pa = palabras(a);
+  const pb = palabras(b);
+  if (!pa.length || !pb.length) return false;
+  const [corto, largo] = pa.length <= pb.length ? [pa, pb] : [pb, pa];
+  return corto.every((p) => largo.includes(p));
+}
+
+function mostrarEscaneado(ficha, isbn) {
+  $('escaneado').hidden = false;
+  $('escaneado').innerHTML = ficha
+    ? `${ficha.portada ? `<img class="portada" src="${escapar(ficha.portada)}" alt="">` : ''}
+       <div>Has escaneado<strong>${escapar(ficha.titulo)}</strong>${escapar(ficha.autor)}</div>`
+    : `<div>Has escaneado<strong>ISBN ${escapar(isbn)}</strong>No hemos encontrado su título.</div>`;
+}
+
+async function buscarIsbn(isbn) {
+  $('consulta').value = isbn;
+  const porIsbn = libros.filter((l) => soloDigitos(l.isbn) === isbn);
+  if (porIsbn.length) {
+    $('escaneado').hidden = true;
+    pintar(porIsbn);
+    return;
+  }
+  $('veredicto').hidden = false;
+  $('veredicto').innerHTML = 'Buscando…';
+  const ficha = await fichaPorIsbn(isbn);
+  if ($('consulta').value !== isbn) return; // ha escrito otra cosa mientras tanto
+  mostrarEscaneado(ficha, isbn);
+  pintar(ficha ? libros.filter((l) => mismoTitulo(l.titulo, ficha.titulo)) : []);
+  if (!ficha) {
+    // Sin título no podemos asegurar que no lo tenga: puede estar en el Sheet sin ISBN.
+    $('veredicto').innerHTML = 'No sabemos qué libro es.<small>Busca por el título para asegurarte.</small>';
+  }
+}
+
+// --- Escáner con la cámara (la librería se descarga solo al usarlo) ---
+
+const LIBRERIA_ESCANER = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+let lector = null;
+let leido = false;
+
+function cargarScript(src) {
+  return new Promise((resolver, fallar) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolver;
+    script.onerror = fallar;
+    document.head.append(script);
+  });
+}
+
+async function abrirEscaner() {
+  $('escaner').hidden = false;
+  $('escaner-aviso').textContent = 'Abriendo la cámara…';
+  leido = false;
+  try {
+    if (!window.Html5Qrcode) await cargarScript(LIBRERIA_ESCANER);
+    lector = new Html5Qrcode('lector', {
+      formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      verbose: false,
+    });
+    await lector.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 260, height: 120 } }, alLeer, () => {});
+    $('escaner-aviso').textContent = '';
+  } catch (error) {
+    $('escaner-aviso').textContent = 'No hemos podido abrir la cámara. Revisa el permiso del navegador o escribe el ISBN.';
+  }
+}
+
+async function cerrarEscaner() {
+  if (lector?.isScanning) await lector.stop();
+  lector = null;
+  $('lector').innerHTML = '';
+  $('escaner').hidden = true;
+}
+
+async function alLeer(codigo) {
+  if (leido || !esIsbn(codigo)) return; // ignora lecturas repetidas y códigos que no son de libro
+  leido = true;
+  await cerrarEscaner();
+  buscarIsbn(codigo);
 }
 
 async function cargar() {
@@ -104,7 +209,12 @@ async function cargar() {
   pintar();
 }
 
-$('consulta').addEventListener('input', pintar);
+$('consulta').addEventListener('input', () => {
+  $('escaneado').hidden = true;
+  const isbn = soloDigitos($('consulta').value);
+  if (esIsbn(isbn)) buscarIsbn(isbn);
+  else pintar();
+});
 $('buscador').addEventListener('submit', (e) => {
   e.preventDefault();
   $('consulta').blur(); // cierra el teclado del móvil
@@ -113,8 +223,7 @@ $('cotillea').addEventListener('click', () => {
   cotilleando = !cotilleando;
   pintar();
 });
-$('camara').addEventListener('click', () => {
-  alert('El escáner llega en la fase 3. De momento, escribe el título o el ISBN.');
-});
+$('camara').addEventListener('click', abrirEscaner);
+$('escaner-cerrar').addEventListener('click', cerrarEscaner);
 
 cargar();

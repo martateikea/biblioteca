@@ -22,10 +22,21 @@
       </button>
     </form>
 
+    <div id="escaneado" hidden></div>
     <div id="veredicto" hidden></div>
     <button id="cotillea" type="button" hidden>Cotillea su biblioteca</button>
     <ul id="resultados"></ul>
   </main>
+
+  <div id="escaner" hidden>
+    <div class="escaner-caja">
+      <p class="escaner-titulo">Dale la vuelta al libro.</p>
+      <p class="suave">Enfoca el código de barras de la contraportada.</p>
+      <div id="lector"></div>
+      <p id="escaner-aviso" class="suave"></p>
+      <button id="escaner-cerrar" type="button">Cancelar</button>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="datos-ejemplo.js"></script>

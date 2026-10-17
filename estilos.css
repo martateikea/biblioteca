@@ -76,6 +76,50 @@ main {
 }
 #veredicto small { display: block; font-weight: 400; color: var(--texto-suave); margin-top: 4px; }
 
+#escaneado {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 16px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+#escaneado strong { display: block; color: var(--texto); font-size: 1rem; }
+
+#escaner {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgb(0 0 0 / 0.6);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+#escaner[hidden] { display: none; }
+.escaner-caja {
+  width: 100%;
+  max-width: 420px;
+  background: var(--fondo);
+  border-radius: var(--radio);
+  padding: 20px;
+  text-align: center;
+}
+.escaner-titulo { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
+#lector { margin: 16px 0 8px; border-radius: 10px; overflow: hidden; background: #000; min-height: 200px; }
+#lector video { width: 100% !important; display: block; }
+#escaner-aviso:empty { display: none; }
+#escaner-cerrar {
+  margin-top: 8px;
+  padding: 12px 24px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 #resultados { list-style: none; padding: 0; margin: 8px 0 0; }
 
 .libro {
