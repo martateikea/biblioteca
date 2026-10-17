@@ -13,7 +13,6 @@ const CAMPOS = {
   estado: 'Estado',
   nota: 'Nota',
   edad: 'Edad',
-  favorito: 'Favorito',
   reservadoPor: 'Reservado por',
   fecha: 'Fecha alta',
 };
@@ -51,7 +50,6 @@ function configurar() {
 
   columna('estado').setDataValidation(lista(ESTADOS));
   columna('edad').setDataValidation(lista(EDADES));
-  columna('favorito').insertCheckboxes();
   columna('isbn').setNumberFormat('@'); // texto, para no perder ceros ni guiones
   columna('fecha').setNumberFormat('dd/mm/yyyy');
 
@@ -114,14 +112,13 @@ function alta(datos) {
     estado: datos.estado,
     nota: '',
     edad: '',
-    favorito: false,
     reservadoPor: datos.estado === 'Reservado' ? texto(datos.nombre, 60) : '',
     fecha: new Date(),
   };
   const campoDe = {};
   Object.entries(CAMPOS).forEach(([campo, nombre]) => { campoDe[nombre] = campo; });
-  // Primera fila sin título ni ISBN. No vale appendRow: las casillas de Favorito
-  // cuentan como contenido y escribiría debajo de la fila 1000.
+  // Primera fila sin título ni ISBN: aprovecha los huecos si se borran filas
+  // y no depende de qué otras columnas tengan contenido.
   const libre = filas.findIndex((fila) => !fila[indice.titulo] && !fila[indice.isbn]);
   const filaHoja = (libre < 0 ? filas.length : libre) + 2;
   hoja.getRange(filaHoja, 1, 1, cabecera.length)
