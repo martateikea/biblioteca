@@ -28,14 +28,34 @@
     <ul id="resultados"></ul>
   </main>
 
-  <div id="escaner" hidden>
-    <div class="escaner-caja">
-      <p class="escaner-titulo">Dale la vuelta al libro.</p>
+  <div id="escaner" class="capa" hidden>
+    <div class="caja">
+      <p class="caja-titulo">Dale la vuelta al libro.</p>
       <p class="suave">Enfoca el código de barras de la contraportada.</p>
       <div id="lector"></div>
       <p id="escaner-aviso" class="suave"></p>
-      <button id="escaner-cerrar" type="button">Cancelar</button>
+      <button id="escaner-cerrar" type="button" class="secundario">Cancelar</button>
     </div>
+  </div>
+
+  <div id="formulario" class="capa" hidden>
+    <form id="form" class="caja" novalidate>
+      <p id="form-titulo" class="caja-titulo">Apúntalo.</p>
+      <p id="form-sub" class="suave"></p>
+      <div id="form-libro">
+        <div class="opciones">
+          <label><input type="radio" name="estado" value="Reservado"><span>Se lo voy a regalar</span></label>
+          <label><input type="radio" name="estado" value="En casa"><span>Ya está en casa</span></label>
+        </div>
+        <label class="campo">Título<input name="titulo" maxlength="200" autocomplete="off"></label>
+        <label class="campo">Autor<input name="autor" maxlength="200" autocomplete="off"></label>
+        <label class="campo">ISBN <span class="suave">· opcional, rellena el resto solo</span><input name="isbn" inputmode="numeric" maxlength="17" autocomplete="off"></label>
+      </div>
+      <label id="form-nombre" class="campo">Tu nombre <span class="suave">· opcional, solo lo verán los padres</span><input name="nombre" maxlength="60" autocomplete="given-name"></label>
+      <p id="form-aviso" class="aviso"></p>
+      <button id="form-enviar" type="submit" class="primario">Apuntarlo</button>
+      <button id="form-cerrar" type="button" class="secundario">Cancelar</button>
+    </form>
   </div>
 
   <script src="config.js"></script>

@@ -1,4 +1,5 @@
 /* Estructura y disposición. Los colores vienen de tema.css. */
+[hidden] { display: none !important; }
 * { box-sizing: border-box; }
 
 body {
@@ -86,7 +87,7 @@ main {
 }
 #escaneado strong { display: block; color: var(--texto); font-size: 1rem; }
 
-#escaner {
+.capa {
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -94,9 +95,10 @@ main {
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow-y: auto;
 }
-#escaner[hidden] { display: none; }
-.escaner-caja {
+.capa[hidden] { display: none; }
+.caja {
   width: 100%;
   max-width: 420px;
   background: var(--fondo);
@@ -104,21 +106,73 @@ main {
   padding: 20px;
   text-align: center;
 }
-.escaner-titulo { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
+.caja-titulo { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
 #lector { margin: 16px 0 8px; border-radius: 10px; overflow: hidden; background: #000; min-height: 200px; }
 #lector video { width: 100% !important; display: block; }
 #escaner-aviso:empty { display: none; }
-#escaner-cerrar {
+
+.primario, .secundario {
+  display: block;
+  width: 100%;
   margin-top: 8px;
-  padding: 12px 24px;
-  border: 1px solid var(--borde);
+  padding: 13px 20px;
   border-radius: 999px;
-  background: var(--superficie);
-  color: var(--texto);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
+.primario { border: 0; background: var(--acento); color: var(--fondo); }
+.primario:disabled { opacity: 0.5; }
+.secundario { border: 1px solid var(--borde); background: var(--superficie); color: var(--texto); }
+
+.acciones { margin-top: 12px; }
+#veredicto .enlace, .reservar {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.reservar { display: block; margin-top: 8px; }
+
+#form { text-align: left; }
+#form .caja-titulo, #form > .suave { text-align: center; }
+.opciones { display: flex; gap: 8px; margin: 16px 0 4px; }
+.opciones label { flex: 1; }
+.opciones input { position: absolute; opacity: 0; }
+.opciones span {
+  display: block;
+  padding: 10px 8px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.opciones input:checked + span { border-color: var(--acento); background: var(--superficie); outline: 1px solid var(--acento); }
+.opciones input:focus-visible + span { outline: 2px solid var(--acento); }
+.campo { display: block; margin-top: 12px; font-size: 0.9rem; font-weight: 600; }
+.campo .suave { font-weight: 400; }
+.campo input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.aviso { min-height: 1.2em; margin: 12px 0 0; font-size: 0.9rem; color: var(--reservado); text-align: center; }
 
 #resultados { list-style: none; padding: 0; margin: 8px 0 0; }
 

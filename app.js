@@ -49,18 +49,26 @@ function tarjeta(libro) {
         ${libro.autor ? `<p>${escapar(libro.autor)}</p>` : ''}
         ${libro.nota ? `<p>${escapar(libro.nota)}</p>` : ''}
         ${libro.estado ? `<span class="estado ${claseEstado(libro.estado)}">${escapar(libro.estado)}</span>` : ''}
+        ${libro.estado === 'Lista de deseos' ? `<button type="button" class="reservar" data-reservar="${libros.indexOf(libro)}">Se lo regalo yo</button>` : ''}
       </div>
     </li>`;
 }
 
 // La respuesta directa a "¿lo tiene?", encima de la lista.
 // Tono: titular corto y con intención; la segunda línea dice qué hacer, sin ambigüedad.
+const BOTONES_ALTA = `
+  <div class="acciones">
+    <button type="button" class="primario" data-alta="Reservado">Se lo voy a regalar</button>
+    <button type="button" class="secundario" data-alta="En casa">Ya está en casa</button>
+  </div>`;
+
 function veredicto(encontrados) {
   if (!encontrados.length) {
-    return 'Aún no lo tiene.<small>Podría ser el siguiente.</small>';
+    return `Aún no lo tiene.<small>Podría ser el siguiente.</small>${BOTONES_ALTA}`;
   }
   if (encontrados.length > 1) {
-    return `${encontrados.length} coincidencias.<small>Cada una con su estado. Míralas antes de decidir.</small>`;
+    return `${encontrados.length} coincidencias.<small>Cada una con su estado. Míralas antes de decidir.</small>
+      <button type="button" class="enlace" data-alta="Reservado">¿No es ninguno de estos? Apúntalo</button>`;
   }
   const { estado } = encontrados[0];
   if (estado === 'En casa') return 'Ya es suyo.<small>Este ya lo lee. Busca otro.</small>';
@@ -120,6 +128,9 @@ function mostrarEscaneado(ficha, isbn) {
     : `<div>Has escaneado<strong>ISBN ${escapar(isbn)}</strong>No hemos encontrado su título.</div>`;
 }
 
+// Lo último escaneado, para rellenar el formulario de alta.
+let ultimaFicha = null;
+
 async function buscarIsbn(isbn) {
   $('consulta').value = isbn;
   const porIsbn = libros.filter((l) => soloDigitos(l.isbn) === isbn);
@@ -132,12 +143,133 @@ async function buscarIsbn(isbn) {
   $('veredicto').innerHTML = 'Buscando…';
   const ficha = await fichaPorIsbn(isbn);
   if ($('consulta').value !== isbn) return; // ha escrito otra cosa mientras tanto
+  ultimaFicha = { ...ficha, isbn };
   mostrarEscaneado(ficha, isbn);
   pintar(ficha ? libros.filter((l) => mismoTitulo(l.titulo, ficha.titulo)) : []);
   if (!ficha) {
     // Sin título no podemos asegurar que no lo tenga: puede estar en el Sheet sin ISBN.
-    $('veredicto').innerHTML = 'No sabemos qué libro es.<small>Busca por el título para asegurarte.</small>';
+    $('veredicto').innerHTML = `No sabemos qué libro es.<small>Busca por el título para asegurarte. Si no está, apúntalo.</small>${BOTONES_ALTA}`;
   }
+}
+
+// --- Apuntar libros: alta nueva o reserva de uno de la lista de deseos ---
+
+let pendiente = null; // { accion: 'alta' } o { accion: 'reservar', libro }
+let portadaForm = '';
+
+const campo = (nombre) => $('form').elements[nombre];
+
+function recordarNombre(nombre) {
+  try {
+    if (nombre === undefined) return localStorage.getItem('nombre') ?? '';
+    localStorage.setItem('nombre', nombre);
+  } catch (error) {
+    return '';
+  }
+}
+
+function abrirFormulario(accion, { estado, libro } = {}) {
+  pendiente = { accion, libro };
+  $('form').reset();
+  $('form-aviso').textContent = '';
+  $('form-enviar').disabled = false;
+  campo('nombre').value = recordarNombre();
+
+  const reservando = accion === 'reservar';
+  $('form-libro').hidden = reservando;
+  $('form-titulo').textContent = reservando ? 'Se lo regalas tú.' : 'Apúntalo.';
+  $('form-sub').textContent = reservando
+    ? `«${libro.titulo}» dejará de salir como deseo para que nadie más lo compre.`
+    : 'Así nadie más lo comprará.';
+
+  if (!reservando) {
+    $('form').querySelector(`[name="estado"][value="${estado}"]`).checked = true;
+    const consulta = $('consulta').value.trim();
+    const desdeEscaneo = ultimaFicha && ultimaFicha.isbn === soloDigitos(consulta);
+    campo('titulo').value = desdeEscaneo ? ultimaFicha.titulo ?? '' : (esIsbn(soloDigitos(consulta)) ? '' : consulta);
+    campo('autor').value = desdeEscaneo ? ultimaFicha.autor ?? '' : '';
+    campo('isbn').value = desdeEscaneo || esIsbn(soloDigitos(consulta)) ? soloDigitos(consulta) : '';
+    portadaForm = desdeEscaneo ? ultimaFicha.portada ?? '' : '';
+  }
+  actualizarNombre();
+  $('formulario').hidden = false;
+}
+
+// El nombre solo tiene sentido al reservar.
+function actualizarNombre() {
+  const estado = $('form').querySelector('[name="estado"]:checked')?.value;
+  $('form-nombre').hidden = pendiente.accion === 'alta' && estado !== 'Reservado';
+}
+
+async function completarPorIsbn() {
+  const isbn = soloDigitos(campo('isbn').value);
+  if (!esIsbn(isbn)) return;
+  const ficha = await fichaPorIsbn(isbn);
+  if (!ficha || soloDigitos(campo('isbn').value) !== isbn) return;
+  if (!campo('titulo').value.trim()) campo('titulo').value = ficha.titulo;
+  if (!campo('autor').value.trim()) campo('autor').value = ficha.autor;
+  portadaForm = ficha.portada;
+}
+
+async function enviar(datos) {
+  if (!CONFIG.urlDatos) return { ...datos, portada: datos.portada ?? '' }; // modo ejemplo: no guarda nada
+  const respuesta = await fetch(CONFIG.urlDatos, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita la comprobación previa que Apps Script no admite
+    body: JSON.stringify(datos),
+  });
+  const resultado = await respuesta.json();
+  if (!resultado.ok) throw new Error(resultado.error);
+  return resultado.libro;
+}
+
+async function guardarFormulario(evento) {
+  evento.preventDefault();
+  const datos = Object.fromEntries(new FormData($('form')));
+  if (pendiente.accion === 'alta' && !datos.titulo.trim()) {
+    $('form-aviso').textContent = 'Falta el título.';
+    return;
+  }
+  $('form-enviar').disabled = true;
+  $('form-aviso').textContent = 'Guardando…';
+  try {
+    let libro;
+    if (pendiente.accion === 'reservar') {
+      libro = pendiente.libro;
+      await enviar({ accion: 'reservar', isbn: libro.isbn, titulo: libro.titulo, nombre: datos.nombre });
+      libro.estado = 'Reservado';
+    } else {
+      libro = await enviar({
+        accion: 'alta',
+        estado: datos.estado,
+        titulo: datos.titulo,
+        autor: datos.autor,
+        isbn: soloDigitos(datos.isbn),
+        portada: portadaForm,
+        nombre: datos.estado === 'Reservado' ? datos.nombre : '',
+      });
+      libros.push(libro);
+    }
+    if (datos.nombre) recordarNombre(datos.nombre);
+    $('formulario').hidden = true;
+    mostrarApuntado(libro);
+  } catch (error) {
+    $('form-enviar').disabled = false;
+    $('form-aviso').textContent = error instanceof TypeError
+      ? 'No se ha podido guardar. Revisa la conexión e inténtalo de nuevo.'
+      : error.message;
+  }
+}
+
+function mostrarApuntado(libro) {
+  actualizarCifra();
+  $('consulta').value = libro.titulo;
+  $('escaneado').hidden = true;
+  ultimaFicha = null;
+  pintar([libro]);
+  $('veredicto').innerHTML = libro.estado === 'Reservado'
+    ? 'Apuntado.<small>Ya sale como reservado. Nadie más lo comprará.</small>'
+    : 'Apuntado.<small>Uno más en su biblioteca.</small>';
 }
 
 // --- Escáner con la cámara (la librería se descarga solo al usarlo) ---
@@ -188,6 +320,12 @@ async function alLeer(codigo) {
   buscarIsbn(codigo);
 }
 
+function actualizarCifra() {
+  const enCasa = libros.filter((l) => l.estado === 'En casa').length;
+  const de = CONFIG.peque ? ` de ${CONFIG.peque}` : '';
+  $('cifra').textContent = `${enCasa} ${enCasa === 1 ? 'libro' : 'libros'}${de}.`;
+}
+
 async function cargar() {
   document.title = CONFIG.nombre;
   try {
@@ -197,9 +335,7 @@ async function cargar() {
     } else {
       libros = DATOS_EJEMPLO;
     }
-    const enCasa = libros.filter((l) => l.estado === 'En casa').length;
-    const de = CONFIG.peque ? ` de ${CONFIG.peque}` : '';
-    $('cifra').textContent = `${enCasa} ${enCasa === 1 ? 'libro' : 'libros'}${de}.`;
+    actualizarCifra();
     $('resumen').textContent = `Antes de regalar, busca.${CONFIG.urlDatos ? '' : ' (Datos de ejemplo)'}`;
   } catch (error) {
     $('cifra').textContent = 'Vaya.';
@@ -225,5 +361,16 @@ $('cotillea').addEventListener('click', () => {
 });
 $('camara').addEventListener('click', abrirEscaner);
 $('escaner-cerrar').addEventListener('click', cerrarEscaner);
+
+document.addEventListener('click', (evento) => {
+  const alta = evento.target.closest('[data-alta]');
+  const reserva = evento.target.closest('[data-reservar]');
+  if (alta) abrirFormulario('alta', { estado: alta.dataset.alta });
+  if (reserva) abrirFormulario('reservar', { libro: libros[reserva.dataset.reservar] });
+});
+$('form').addEventListener('submit', guardarFormulario);
+$('form').addEventListener('change', actualizarNombre);
+campo('isbn').addEventListener('input', completarPorIsbn);
+$('form-cerrar').addEventListener('click', () => { $('formulario').hidden = true; });
 
 cargar();
