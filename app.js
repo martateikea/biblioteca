@@ -36,11 +36,12 @@ function ordenar(a, b) {
 
 const escapar = (texto) => String(texto ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const claseEstado = (estado) => palabras(estado).join('-') || 'sin-estado';
+const mensaje = ([titular, explicacion]) => `${escapar(titular)}<small>${escapar(explicacion)}</small>`;
 
 function tarjeta(libro) {
   const portada = /^https?:\/\//.test(libro.portada)
     ? `<img class="portada" src="${escapar(libro.portada)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
-    : `<div class="portada">${escapar(String(libro.titulo).charAt(0).toUpperCase())}</div>`;
+    : `<div class="portada">${escapar((String(libro.titulo).match(/[\p{L}\p{N}]/u)?.[0] ?? '').toUpperCase())}</div>`;
   return `
     <li class="libro">
       ${portada}
@@ -48,32 +49,32 @@ function tarjeta(libro) {
         <h2>${escapar(libro.titulo)}</h2>
         ${libro.autor ? `<p>${escapar(libro.autor)}</p>` : ''}
         ${libro.nota ? `<p>${escapar(libro.nota)}</p>` : ''}
-        ${libro.estado ? `<span class="estado ${claseEstado(libro.estado)}">${escapar(libro.estado)}</span>` : ''}
-        ${libro.estado === 'Lista de deseos' ? `<button type="button" class="reservar" data-reservar="${libros.indexOf(libro)}">Se lo regalo yo</button>` : ''}
+        ${libro.estado ? `<span class="estado ${claseEstado(libro.estado)}">${escapar(TEXTOS.estados[libro.estado] ?? libro.estado)}</span>` : ''}
+        ${libro.estado === 'Lista de deseos' ? `<button type="button" class="reservar" data-reservar="${libros.indexOf(libro)}">${escapar(TEXTOS.botonReservar)}</button>` : ''}
       </div>
     </li>`;
 }
 
 // La respuesta directa a "¿lo tiene?", encima de la lista.
 // Tono: titular corto y con intención; la segunda línea dice qué hacer, sin ambigüedad.
-const BOTONES_ALTA = `
+const botonesAlta = () => `
   <div class="acciones">
-    <button type="button" class="primario" data-alta="Reservado">Se lo voy a regalar</button>
-    <button type="button" class="secundario" data-alta="En casa">Ya está en casa</button>
+    <button type="button" class="primario" data-alta="Reservado">${escapar(TEXTOS.botonRegalo)}</button>
+    <button type="button" class="secundario" data-alta="En casa">${escapar(TEXTOS.botonEnCasa)}</button>
   </div>`;
 
 function veredicto(encontrados) {
   if (!encontrados.length) {
-    return `Aún no lo tiene.<small>Podría ser el siguiente.</small>${BOTONES_ALTA}`;
+    return mensaje(TEXTOS.noLoTiene) + botonesAlta();
   }
   if (encontrados.length > 1) {
-    return `${encontrados.length} coincidencias.<small>Cada una con su estado. Míralas antes de decidir.</small>
-      <button type="button" class="enlace" data-alta="Reservado">¿No es ninguno de estos? Apúntalo</button>`;
+    return `${mensaje(TEXTOS.varios(encontrados.length))}
+      <button type="button" class="enlace" data-alta="Reservado">${escapar(TEXTOS.noEsNinguno)}</button>`;
   }
   const { estado } = encontrados[0];
-  if (estado === 'En casa') return 'Ya es suyo.<small>Este ya lo lee. Busca otro.</small>';
-  if (estado === 'Reservado') return 'Alguien se te ha adelantado.<small>Ya está reservado. Busca otro.</small>';
-  return 'Lo está deseando.<small>Está en su lista de deseos. Gran elección.</small>';
+  if (estado === 'En casa') return mensaje(TEXTOS.enCasa);
+  if (estado === 'Reservado') return mensaje(TEXTOS.reservado);
+  return mensaje(TEXTOS.deseo);
 }
 
 let cotilleando = false;
@@ -88,7 +89,7 @@ function pintar(forzados) {
   $('veredicto').innerHTML = consulta ? veredicto(encontrados) : '';
   $('cotillea').hidden = Boolean(consulta) || !libros.length;
   $('cotillea').setAttribute('aria-expanded', cotilleando);
-  $('cotillea').textContent = cotilleando ? 'Ocultar' : `Cotillea ${CONFIG.peque ? `la biblioteca de ${CONFIG.peque}` : 'su biblioteca'}`;
+  $('cotillea').textContent = cotilleando ? TEXTOS.ocultar : TEXTOS.cotillea(CONFIG.peque);
   $('resultados').innerHTML = visibles.map(tarjeta).join('');
 }
 
@@ -168,7 +169,7 @@ async function buscarIsbn(isbn) {
   pintar(ficha ? libros.filter((l) => mismoTitulo(l.titulo, ficha.titulo)) : []);
   if (!ficha) {
     // Sin título no podemos asegurar que no lo tenga: puede estar en el Sheet sin ISBN.
-    $('veredicto').innerHTML = `No sabemos qué libro es.<small>Busca por el título para asegurarte. Si no está, apúntalo.</small>${BOTONES_ALTA}`;
+    $('veredicto').innerHTML = mensaje(TEXTOS.desconocido) + botonesAlta();
   }
 }
 
@@ -197,10 +198,9 @@ function abrirFormulario(accion, { estado, libro } = {}) {
 
   const reservando = accion === 'reservar';
   $('form-libro').hidden = reservando;
-  $('form-titulo').textContent = reservando ? 'Se lo regalas tú.' : 'Apúntalo.';
-  $('form-sub').textContent = reservando
-    ? `«${libro.titulo}» dejará de salir como deseo para que nadie más lo compre.`
-    : 'Así nadie más lo comprará.';
+  [$('form-titulo').textContent, $('form-sub').textContent] = reservando
+    ? TEXTOS.formReserva(libro.titulo)
+    : TEXTOS.formAlta;
 
   if (!reservando) {
     $('form').querySelector(`[name="estado"][value="${estado}"]`).checked = true;
@@ -287,9 +287,7 @@ function mostrarApuntado(libro) {
   $('escaneado').hidden = true;
   ultimaFicha = null;
   pintar([libro]);
-  $('veredicto').innerHTML = libro.estado === 'Reservado'
-    ? 'Apuntado.<small>Ya sale como reservado. Nadie más lo comprará.</small>'
-    : 'Apuntado.<small>Uno más en su biblioteca.</small>';
+  $('veredicto').innerHTML = mensaje(libro.estado === 'Reservado' ? TEXTOS.apuntadoReservado : TEXTOS.apuntadoEnCasa);
 }
 
 // --- Escáner con la cámara (la librería se descarga solo al usarlo) ---
@@ -342,8 +340,7 @@ async function alLeer(codigo) {
 
 function actualizarCifra() {
   const enCasa = libros.filter((l) => l.estado === 'En casa').length;
-  const de = CONFIG.peque ? ` de ${CONFIG.peque}` : '';
-  $('cifra').textContent = `${enCasa} ${enCasa === 1 ? 'libro' : 'libros'}${de}.`;
+  $('cifra').textContent = TEXTOS.cifra(enCasa, CONFIG.peque);
 }
 
 async function cargar() {
@@ -356,11 +353,9 @@ async function cargar() {
       libros = DATOS_EJEMPLO;
     }
     actualizarCifra();
-    $('resumen').textContent = `Antes de regalar, busca.${CONFIG.urlDatos ? '' : ' (Datos de ejemplo)'}`;
+    $('resumen').textContent = `${TEXTOS.resumen}${CONFIG.urlDatos ? '' : ' (Datos de ejemplo)'}`;
   } catch (error) {
-    $('cifra').textContent = 'Vaya.';
-    $('lema').textContent = 'Algo no ha cargado.';
-    $('resumen').textContent = 'Recarga la página y lo intentamos de nuevo.';
+    [$('cifra').textContent, $('lema').textContent, $('resumen').textContent] = TEXTOS.error;
   }
   pintar();
 }
