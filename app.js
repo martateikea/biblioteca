@@ -96,7 +96,12 @@ function pintar(forzados) {
 
 const esIsbn = (texto) => /^97[89]\d{10}$/.test(texto);
 
+// Pregunta primero a Google Books y, si no lo conoce, a Open Library.
 async function fichaPorIsbn(isbn) {
+  return (await fichaGoogle(isbn)) ?? (await fichaOpenLibrary(isbn));
+}
+
+async function fichaGoogle(isbn) {
   try {
     const respuesta = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
     const info = (await respuesta.json()).items?.[0]?.volumeInfo;
@@ -105,6 +110,21 @@ async function fichaPorIsbn(isbn) {
       titulo: info.title,
       autor: (info.authors ?? []).join(', '),
       portada: (info.imageLinks?.thumbnail ?? '').replace('http:', 'https:'),
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+async function fichaOpenLibrary(isbn) {
+  try {
+    const respuesta = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+    const info = (await respuesta.json())[`ISBN:${isbn}`];
+    if (!info) return null;
+    return {
+      titulo: info.title,
+      autor: (info.authors ?? []).map((a) => a.name).join(', '),
+      portada: info.cover?.medium ?? '',
     };
   } catch (error) {
     return null;
