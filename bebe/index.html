@@ -27,12 +27,12 @@
         <path d="M14 44c0-3 4-4 5-1 1-3 5-2 5 1 0 3-5 6-5 6s-5-3-5-6z" fill="#E98C7A"/>
       </svg>
       <p id="cifra">…</p>
-      <p id="lema">y los que vendrán ♡</p>
+      <p id="lema">Cada cuento es un tesoro ♡</p>
       <p id="resumen" class="suave">Cargando cuentos…</p>
     </header>
 
     <form id="buscador" role="search">
-      <input id="consulta" type="search" placeholder="¿Qué cuento quieres regalarle?" autocomplete="off" enterkeyhint="search">
+      <input id="consulta" type="search" placeholder="Busquemos si ya lo tiene…" autocomplete="off" enterkeyhint="search">
       <button id="camara" type="button" aria-label="Escanear código de barras">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </button>
@@ -65,7 +65,7 @@
         </div>
         <label class="campo">Título del cuento<input name="titulo" maxlength="200" autocomplete="off"></label>
         <label class="campo">Autor<input name="autor" maxlength="200" autocomplete="off"></label>
-        <label class="campo">ISBN <span class="suave">· opcional, el resto se rellena solito</span><input name="isbn" inputmode="numeric" maxlength="17" autocomplete="off"></label>
+        <label id="campo-isbn" class="campo">ISBN <span class="suave">· opcional, el resto se rellena solito</span><input name="isbn" inputmode="numeric" maxlength="17" autocomplete="off"></label>
       </div>
       <label id="form-nombre" class="campo">Tu nombre <span class="suave">· opcional, solo lo verán en casa</span><input name="nombre" maxlength="60" autocomplete="given-name"></label>
       <p id="form-aviso" class="aviso"></p>

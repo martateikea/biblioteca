@@ -84,7 +84,10 @@ function doPost(e) {
   bloqueo.waitLock(10000);
   try {
     const datos = JSON.parse(e.postData.contents);
-    const libro = datos.accion === 'reservar' ? reservar(datos) : alta(datos);
+    const acciones = { alta, reservar, editar };
+    const accion = acciones[datos.accion];
+    if (!accion) throw new Error('Acción no válida.');
+    const libro = accion(datos);
     return responder({ ok: true, libro });
   } catch (error) {
     return responder({ ok: false, error: error.message });
@@ -126,14 +129,44 @@ function alta(datos) {
   return publico(libro);
 }
 
+// Busca la fila de un libro por su ISBN o, si no tiene, por su título exacto.
+function buscarFila(filas, indice, isbn, titulo) {
+  const digitos = soloDigitos(isbn);
+  const nombre = String(titulo ?? '').trim().toLowerCase();
+  return filas.findIndex((fila) => (digitos
+    ? soloDigitos(fila[indice.isbn]) === digitos
+    : String(fila[indice.titulo]).trim().toLowerCase() === nombre));
+}
+
+// La familia corrige título y autor o cambia el estado (p. ej. "ya se lo he dado").
+function editar(datos) {
+  const { hoja, cabecera, filas, indice } = leerHoja();
+  const titulo = texto(datos.titulo, 200);
+  if (!titulo) throw new Error('Falta el título.');
+  if (!ESTADOS_FAMILIA.includes(datos.estado)) throw new Error('Estado no válido.');
+
+  const i = buscarFila(filas, indice, datos.isbn, datos.original);
+  if (i < 0) throw new Error('No encontramos ese libro. Recarga la página.');
+  if (!ESTADOS_FAMILIA.includes(filas[i][indice.estado])) {
+    throw new Error('Este libro solo se puede cambiar desde el Sheet.');
+  }
+
+  const fila = filas[i].slice();
+  fila[indice.titulo] = titulo;
+  if (indice.autor >= 0) fila[indice.autor] = texto(datos.autor, 200);
+  fila[indice.estado] = datos.estado;
+  hoja.getRange(i + 2, 1, 1, cabecera.length).setValues([fila]);
+
+  const libro = {};
+  Object.keys(CAMPOS).forEach((campo) => {
+    if (indice[campo] >= 0) libro[campo] = fila[indice[campo]];
+  });
+  return publico(libro);
+}
+
 function reservar(datos) {
   const { hoja, filas, indice } = leerHoja();
-  const isbn = soloDigitos(datos.isbn);
-  const titulo = String(datos.titulo ?? '').trim().toLowerCase();
-  const i = filas.findIndex((fila) => (isbn
-    ? soloDigitos(fila[indice.isbn]) === isbn
-    : String(fila[indice.titulo]).trim().toLowerCase() === titulo));
-
+  const i = buscarFila(filas, indice, datos.isbn, datos.titulo);
   if (i < 0) throw new Error('No encontramos ese libro.');
   if (filas[i][indice.estado] !== 'Lista de deseos') {
     throw new Error('Alguien se te ha adelantado: ya no está en la lista de deseos.');

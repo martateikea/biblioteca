@@ -2,7 +2,7 @@
 // Los pares [titular, explicación]: el titular lleva el tono; la explicación dice qué hacer, sin ambigüedad.
 const TEXTOS = {
   cifra: (n, peque) => `${n} ${n === 1 ? 'libro' : 'libros'}${peque ? ` de ${peque}` : ''}.`,
-  resumen: 'Antes de regalar, busca.',
+  resumen: () => 'Antes de regalar, busca.',
   cotillea: (peque) => `Cotillea ${peque ? `la biblioteca de ${peque}` : 'su biblioteca'}`,
   ocultar: 'Ocultar',
   estados: { 'En casa': 'En casa', 'Reservado': 'Reservado', 'Lista de deseos': 'Lista de deseos' },
@@ -18,10 +18,13 @@ const TEXTOS = {
   botonRegalo: 'Se lo voy a regalar',
   botonEnCasa: 'Ya está en casa',
   botonReservar: 'Se lo regalo yo',
+  botonEditar: 'Editar',
   formAlta: ['Apúntalo.', 'Así nadie más lo comprará.'],
   formReserva: (titulo) => ['Se lo regalas tú.', `«${titulo}» dejará de salir como deseo para que nadie más lo compre.`],
   apuntadoReservado: ['Apuntado.', 'Ya sale como reservado. Nadie más lo comprará.'],
   apuntadoEnCasa: ['Apuntado.', 'Uno más en su biblioteca.'],
+  formEditar: ['Editar.', 'Corrige los datos o cambia el estado.'],
+  editado: ['Actualizado.', 'Gracias por mantenerla al día.'],
 
   error: ['Vaya.', 'Algo no ha cargado.', 'Recarga la página y lo intentamos de nuevo.'],
 };

@@ -8,13 +8,15 @@ let libros = [];
 const $ = (id) => document.getElementById(id);
 
 // "¿A qué sabe la Luna?" -> ["que", "sabe", "luna"]
+// Sin la "s" final, para que "monstruos" encuentre "monstruo".
 function palabras(texto) {
   return String(texto ?? '')
     .toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .split(' ')
-    .filter((p) => p && !PALABRAS_VACIAS.has(p));
+    .filter((p) => p && !PALABRAS_VACIAS.has(p))
+    .map((p) => (p.length > 3 ? p.replace(/s$/, '') : p));
 }
 
 const soloDigitos = (texto) => String(texto ?? '').replace(/[^0-9xX]/g, '');
@@ -50,7 +52,9 @@ function tarjeta(libro) {
         ${libro.autor ? `<p>${escapar(libro.autor)}</p>` : ''}
         ${libro.nota ? `<p>${escapar(libro.nota)}</p>` : ''}
         ${libro.estado ? `<span class="estado ${claseEstado(libro.estado)}">${escapar(TEXTOS.estados[libro.estado] ?? libro.estado)}</span>` : ''}
-        ${libro.estado === 'Lista de deseos' ? `<button type="button" class="reservar" data-reservar="${libros.indexOf(libro)}">${escapar(TEXTOS.botonReservar)}</button>` : ''}
+        ${libro.estado === 'Lista de deseos'
+          ? `<button type="button" class="reservar" data-reservar="${libros.indexOf(libro)}">${escapar(TEXTOS.botonReservar)}</button>`
+          : `<button type="button" class="reservar" data-editar="${libros.indexOf(libro)}">${escapar(TEXTOS.botonEditar)}</button>`}
       </div>
     </li>`;
 }
@@ -175,10 +179,11 @@ async function buscarIsbn(isbn) {
 
 // --- Apuntar libros: alta nueva o reserva de uno de la lista de deseos ---
 
-let pendiente = null; // { accion: 'alta' } o { accion: 'reservar', libro }
+let pendiente = null; // { accion: 'alta' }, { accion: 'reservar', libro } o { accion: 'editar', libro }
 let portadaForm = '';
 
 const campo = (nombre) => $('form').elements[nombre];
+const textoEnviar = $('form-enviar').textContent;
 
 function recordarNombre(nombre) {
   try {
@@ -194,15 +199,23 @@ function abrirFormulario(accion, { estado, libro } = {}) {
   $('form').reset();
   $('form-aviso').textContent = '';
   $('form-enviar').disabled = false;
+  $('form-enviar').textContent = accion === 'editar' ? 'Guardar' : textoEnviar;
   campo('nombre').value = recordarNombre();
 
   const reservando = accion === 'reservar';
   $('form-libro').hidden = reservando;
-  [$('form-titulo').textContent, $('form-sub').textContent] = reservando
-    ? TEXTOS.formReserva(libro.titulo)
-    : TEXTOS.formAlta;
+  $('campo-isbn').hidden = accion === 'editar'; // el ISBN identifica el libro: no se cambia
+  [$('form-titulo').textContent, $('form-sub').textContent] = {
+    alta: TEXTOS.formAlta,
+    reservar: reservando && TEXTOS.formReserva(libro.titulo),
+    editar: TEXTOS.formEditar,
+  }[accion];
 
-  if (!reservando) {
+  if (accion === 'editar') {
+    $('form').querySelector(`[name="estado"][value="${libro.estado}"]`).checked = true;
+    campo('titulo').value = libro.titulo ?? '';
+    campo('autor').value = libro.autor ?? '';
+  } else if (!reservando) {
     $('form').querySelector(`[name="estado"][value="${estado}"]`).checked = true;
     const consulta = $('consulta').value.trim();
     const desdeEscaneo = ultimaFicha && ultimaFicha.isbn === soloDigitos(consulta);
@@ -218,7 +231,7 @@ function abrirFormulario(accion, { estado, libro } = {}) {
 // El nombre solo tiene sentido al reservar.
 function actualizarNombre() {
   const estado = $('form').querySelector('[name="estado"]:checked')?.value;
-  $('form-nombre').hidden = pendiente.accion === 'alta' && estado !== 'Reservado';
+  $('form-nombre').hidden = pendiente.accion === 'editar' || (pendiente.accion === 'alta' && estado !== 'Reservado');
 }
 
 async function completarPorIsbn() {
@@ -246,7 +259,7 @@ async function enviar(datos) {
 async function guardarFormulario(evento) {
   evento.preventDefault();
   const datos = Object.fromEntries(new FormData($('form')));
-  if (pendiente.accion === 'alta' && !datos.titulo.trim()) {
+  if (pendiente.accion !== 'reservar' && !datos.titulo.trim()) {
     $('form-aviso').textContent = 'Falta el título.';
     return;
   }
@@ -258,6 +271,17 @@ async function guardarFormulario(evento) {
       libro = pendiente.libro;
       await enviar({ accion: 'reservar', isbn: libro.isbn, titulo: libro.titulo, nombre: datos.nombre });
       libro.estado = 'Reservado';
+    } else if (pendiente.accion === 'editar') {
+      libro = pendiente.libro;
+      const editado = await enviar({
+        accion: 'editar',
+        isbn: libro.isbn,
+        original: libro.titulo,
+        titulo: datos.titulo,
+        autor: datos.autor,
+        estado: datos.estado,
+      });
+      Object.assign(libro, { titulo: editado.titulo, autor: editado.autor, estado: editado.estado });
     } else {
       libro = await enviar({
         accion: 'alta',
@@ -272,7 +296,7 @@ async function guardarFormulario(evento) {
     }
     if (datos.nombre) recordarNombre(datos.nombre);
     $('formulario').hidden = true;
-    mostrarApuntado(libro);
+    mostrarApuntado(libro, pendiente.accion === 'editar' ? TEXTOS.editado : null);
   } catch (error) {
     $('form-enviar').disabled = false;
     $('form-aviso').textContent = error instanceof TypeError
@@ -281,13 +305,13 @@ async function guardarFormulario(evento) {
   }
 }
 
-function mostrarApuntado(libro) {
+function mostrarApuntado(libro, texto) {
   actualizarCifra();
   $('consulta').value = libro.titulo;
   $('escaneado').hidden = true;
   ultimaFicha = null;
   pintar([libro]);
-  $('veredicto').innerHTML = mensaje(libro.estado === 'Reservado' ? TEXTOS.apuntadoReservado : TEXTOS.apuntadoEnCasa);
+  $('veredicto').innerHTML = mensaje(texto ?? (libro.estado === 'Reservado' ? TEXTOS.apuntadoReservado : TEXTOS.apuntadoEnCasa));
 }
 
 // --- Escáner con la cámara (la librería se descarga solo al usarlo) ---
@@ -353,7 +377,7 @@ async function cargar() {
       libros = DATOS_EJEMPLO;
     }
     actualizarCifra();
-    $('resumen').textContent = `${TEXTOS.resumen}${CONFIG.urlDatos ? '' : ' (Datos de ejemplo)'}`;
+    $('resumen').textContent = `${TEXTOS.resumen(CONFIG.peque)}${CONFIG.urlDatos ? '' : ' (Datos de ejemplo)'}`;
   } catch (error) {
     [$('cifra').textContent, $('lema').textContent, $('resumen').textContent] = TEXTOS.error;
   }
@@ -380,8 +404,10 @@ $('escaner-cerrar').addEventListener('click', cerrarEscaner);
 document.addEventListener('click', (evento) => {
   const alta = evento.target.closest('[data-alta]');
   const reserva = evento.target.closest('[data-reservar]');
+  const edicion = evento.target.closest('[data-editar]');
   if (alta) abrirFormulario('alta', { estado: alta.dataset.alta });
   if (reserva) abrirFormulario('reservar', { libro: libros[reserva.dataset.reservar] });
+  if (edicion) abrirFormulario('editar', { libro: libros[edicion.dataset.editar] });
 });
 $('form').addEventListener('submit', guardarFormulario);
 $('form').addEventListener('change', actualizarNombre);
