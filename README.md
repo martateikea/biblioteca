@@ -1,36 +1,39 @@
 # Prototipo biblioteca
 
-Plantilla maestra. Cada biblioteca (sobrino, amigo…) es un proyecto independiente:
-su propio repositorio, su propia web y su propio Google Sheet con su script.
+Plantilla maestra y escaparate para charlas. Funciona en modo ejemplo (sin Google Sheet):
+se puede buscar, escanear, apuntar, reservar y editar, pero nada se guarda.
+
+- Estética minimalista: https://martateikea.github.io/biblioteca/
+- Estética bebé: https://martateikea.github.io/biblioteca/bebe/
+
+## Estructura
+
+- `app.js` y `estilos.css`: el funcionamiento y la disposición, comunes a las dos estéticas.
+- `index.html`, `tema.css`, `textos.js`: estética minimalista.
+- `bebe/index.html`, `bebe/tema.css`, `bebe/textos.js`: estética bebé.
+- `config.js`: nombre, peque y URL del Sheet (vacía = modo ejemplo).
+- `datos-ejemplo.js`: la biblioteca de ejemplo.
+- `google-sheet/Codigo.gs`: el script que va pegado en el Apps Script de cada Sheet.
+
+## Bibliotecas creadas a partir de esta plantilla
+
+Cada una es un proyecto independiente, con su repositorio, su web y su Sheet:
+
+- Celia: https://martateikea.github.io/biblioteca-celia/ (bebé, rosa)
+- Emilia: https://martateikea.github.io/biblioteca-emilia/ (bebé, lila con lazo)
+
+Las mejoras de la plantilla no llegan solas a las bibliotecas ya creadas: hay que llevarlas a cada una.
 
 ## Crear una biblioteca nueva
 
-**Web**
-
-1. En este repositorio: *Use this template → Create a new repository*. Llámalo, por ejemplo, `biblioteca-nombre`.
-2. En el repositorio nuevo: *Settings → Pages → Branch: main, / (root) → Save*.
-
-**Google Sheet** (en la cuenta de proyectos)
-
-3. Abre el Sheet maestro y haz *Archivo → Hacer una copia*. La copia lleva el script incluido.
-4. En la copia, borra los libros de prueba (deja la fila de cabeceras).
-5. En la copia: *Extensiones → Apps Script → Implementar → Nueva implementación*.
-   Tipo *Aplicación web*, *Ejecutar como: Yo*, *Acceso: Cualquier usuario*. Copia la URL que acaba en `/exec`.
-6. Comparte el Sheet con los padres como editores.
-
-**Conectar**
-
-7. En el repositorio nuevo, edita `config.js` (icono del lápiz en GitHub): nombre de la app, nombre del peque y la URL del paso 5.
-8. El enlace para la familia es `https://<usuario>.github.io/biblioteca-nombre/`.
-
-## Personalizar
-
-- `config.js`: nombre de la app y del peque.
-- `tema.css`: colores y tipografía.
+1. GitHub: crea un repositorio **vacío** (sin plantilla ni README), por ejemplo `biblioteca-jorge`.
+2. Google: en la cuenta de proyectos, haz una copia del Sheet de otra biblioteca, borra sus libros
+   (deja las cabeceras) y publícalo en *Implementar → Nueva implementación → Aplicación web*
+   (Ejecutar como: Yo · Acceso: Cualquier usuario). Copia la URL que acaba en `/exec`.
+3. Copia en el repositorio la estética elegida a la raíz, con `config.js` apuntando a esa URL.
+4. GitHub: *Settings → Pages → Branch: main, / (root) → Save*.
 
 ## Actualizar el script de una biblioteca ya creada
 
 *Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar.*
 Nunca "Nueva implementación": cambiaría la URL y la web dejaría de funcionar.
-
-Los arreglos de la plantilla no llegan solos a las bibliotecas ya creadas: hay que repetirlos en cada una.

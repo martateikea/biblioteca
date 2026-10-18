@@ -1,17 +1,43 @@
-/* Tema visual: colores y tipografía. Cambiar este archivo cambia el aspecto, no el funcionamiento. */
+/* Tema minimalista: blanco, negro y poco más. Cambiar este archivo cambia el aspecto, no el funcionamiento. */
 :root {
   --fondo: #ffffff;
   --superficie: #f5f5f4;
   --texto: #1c1917;
-  --texto-suave: #78716c;
+  --texto-suave: #57534e;  /* 7,6:1 sobre blanco */
   --borde: #e7e5e4;
   --acento: #1c1917;
 
   --en-casa: #15803d;
-  --reservado: #b45309;
-  --deseo: #7c3aed;
-  --no-tiene: #78716c;
+  --reservado: #a14a07;
+  --deseo: #6d28d9;
 
   --fuente: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --radio: 14px;
 }
+
+/* Cabecera: el nombre en grande, sin adornos */
+.titulo-pre { font-size: 1.05rem; font-weight: 600; color: var(--texto-suave); margin-bottom: 4px; }
+.titulo-nombre { font-size: clamp(2.6rem, 12vw, 4.2rem); font-weight: 800; letter-spacing: -0.03em; }
+#cifra { font-size: 1.05rem; }
+#lema { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--texto-suave); }
+
+#veredicto { font-size: 1.05rem; }
+
+/* Estantería en lista, separada por líneas finas */
+#cotillea { background: none; padding: 8px 0; margin: 20px 0 0; color: var(--acento); }
+.seccion h2 { font-weight: 700; }
+.cuenta { background: var(--superficie); font-weight: 600; }
+.filtro[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: var(--fondo); }
+.filtro[aria-pressed="true"] .cuenta { color: var(--texto); }
+.portada { border-radius: 6px; }
+.inicial { color: var(--texto-suave); }
+#aviso-flotante { border: 1px solid var(--borde); }
+
+/* Etiquetas de estado en color sólido con texto blanco */
+.estado { color: #fff; }
+.estado.en-casa { background: var(--en-casa); }
+.estado.reservado { background: var(--reservado); }
+.estado.lista-deseos { background: var(--deseo); }
+.estado.sin-estado { background: var(--superficie); color: var(--texto-suave); }
+
+.primario { color: var(--fondo); }

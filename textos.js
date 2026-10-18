@@ -1,11 +1,18 @@
 // Textos de la web. Cada estética puede tener su propio textos.js.
 // Los pares [titular, explicación]: el titular lleva el tono; la explicación dice qué hacer, sin ambigüedad.
 const TEXTOS = {
-  cifra: (n) => `${n} ${n === 1 ? 'libro' : 'libros'}.`,
+  tituloPre: 'La biblioteca de',
+  cifra: (total, deseos) => `${total} ${total === 1 ? 'libro' : 'libros'}`
+    + (deseos ? ` · ${deseos} en su lista de deseos` : '') + '.',
   resumen: () => 'Antes de regalar, busca.',
   cotillea: (peque) => `Cotillea ${peque ? `la biblioteca de ${peque}` : 'su biblioteca'}`,
   ocultar: 'Ocultar',
   estados: { 'En casa': 'En casa', 'Reservado': 'Reservado', 'Lista de deseos': 'Lista de deseos' },
+  secciones: { 'En casa': 'En casa', 'Reservado': 'Reservados', 'Lista de deseos': 'Lista de deseos', otros: 'Otros' },
+  filtrar: 'Filtrar la biblioteca',
+  todos: 'Todos',
+  volver: '← Ver toda la biblioteca',
+  vacia: ['La biblioteca está vacía.', 'Busca un libro arriba y apúntalo.'],
 
   noLoTiene: ['Aún no lo tiene.', 'Podría ser el siguiente.'],
   varios: (n) => [`${n} coincidencias.`, 'Cada una con su estado. Míralas antes de decidir.'],
