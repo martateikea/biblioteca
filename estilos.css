@@ -17,6 +17,8 @@ main {
 }
 
 #portada { margin: 24px 0 20px; }
+#titulo-biblioteca { font-weight: 600; color: var(--texto-suave); margin: 0 0 6px; }
+#titulo-biblioteca:empty { display: none; }
 #cifra { font-size: 3.2rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin: 0; }
 #lema { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; color: var(--texto-suave); margin: 4px 0 12px; }
 .suave { color: var(--texto-suave); margin: 0; }

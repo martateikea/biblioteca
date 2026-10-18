@@ -1,7 +1,7 @@
 // Textos de la web. Cada estética puede tener su propio textos.js.
 // Los pares [titular, explicación]: el titular lleva el tono; la explicación dice qué hacer, sin ambigüedad.
 const TEXTOS = {
-  cifra: (n, peque) => `${n} ${n === 1 ? 'libro' : 'libros'}${peque ? ` de ${peque}` : ''}.`,
+  cifra: (n) => `${n} ${n === 1 ? 'libro' : 'libros'}.`,
   resumen: () => 'Antes de regalar, busca.',
   cotillea: (peque) => `Cotillea ${peque ? `la biblioteca de ${peque}` : 'su biblioteca'}`,
   ocultar: 'Ocultar',

@@ -42,6 +42,7 @@ h2, #cifra, #lema, .caja-titulo, #veredicto, #cotillea, .primario, .secundario, 
   background: var(--rosa);
 }
 #portada .dibujo { position: absolute; top: 6px; right: 4px; width: 130px; }
+#titulo-biblioteca { position: relative; font-family: var(--fuente-titulos); font-size: 1.15rem; font-weight: 500; color: var(--texto); margin: 0 0 4px; max-width: 65%; }
 #cifra { position: relative; font-size: 2.8rem; font-weight: 600; letter-spacing: -0.01em; }
 #lema { position: relative; font-size: 1.3rem; font-weight: 500; color: var(--acento); margin: 6px 0 10px; }
 #portada .suave { position: relative; color: var(--texto); opacity: 0.75; }

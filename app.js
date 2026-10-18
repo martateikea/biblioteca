@@ -364,11 +364,12 @@ async function alLeer(codigo) {
 
 function actualizarCifra() {
   const enCasa = libros.filter((l) => l.estado === 'En casa').length;
-  $('cifra').textContent = TEXTOS.cifra(enCasa, CONFIG.peque);
+  $('cifra').textContent = TEXTOS.cifra(enCasa);
 }
 
 async function cargar() {
   document.title = CONFIG.nombre;
+  $('titulo-biblioteca').textContent = CONFIG.nombre;
   try {
     if (CONFIG.urlDatos) {
       const respuesta = await fetch(CONFIG.urlDatos);

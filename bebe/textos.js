@@ -1,6 +1,6 @@
 // Textos de la estética «bebé»: tiernos, pero siempre claros sobre qué hacer.
 const TEXTOS = {
-  cifra: (n, peque) => `${n} ${n === 1 ? 'cuento' : 'cuentos'}${peque ? ` de ${peque}` : ''}`,
+  cifra: (n) => `${n} ${n === 1 ? 'cuento' : 'cuentos'}`,
   resumen: (peque) => `Echa un vistazo a la estantería${peque ? ` de ${peque}` : ''}.`,
   cotillea: (peque) => `Asómate a la estantería${peque ? ` de ${peque}` : ''}`,
   ocultar: 'Cerrar la estantería',
