@@ -32,6 +32,7 @@
 .portada { border-radius: 6px; }
 .inicial { color: var(--texto-suave); }
 #aviso-flotante { border: 1px solid var(--borde); }
+#acceso { border: 1px solid var(--borde); background: var(--fondo); }
 
 /* Etiquetas de estado en color sólido con texto blanco */
 .estado { color: #fff; }

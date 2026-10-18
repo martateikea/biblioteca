@@ -33,5 +33,10 @@ const TEXTOS = {
   formEditar: ['Editar.', 'Corrige los datos o cambia el estado.'],
   editado: ['Actualizado.', 'Gracias por mantenerla al día.'],
 
+  accesoComprobando: 'Comprobando…',
+  accesoError: 'Esa no es. Pregúntala en casa.',
+  accesoCambiada: 'La contraseña ha cambiado. Escribe la nueva.',
+  accesoSinConexion: 'No hay conexión. Inténtalo de nuevo.',
+
   error: ['Vaya.', 'Algo no ha cargado.', 'Recarga la página y lo intentamos de nuevo.'],
 };
